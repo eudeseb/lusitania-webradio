@@ -1,12 +1,11 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LUSITÂNIA II web rádio</title>
   <style>
-    * { box-sizing: border-box; }
+    /* [ESTILOS COMPLETOS] */
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -51,6 +50,7 @@
       font-size: 0.9rem;
       color: #888;
     }
+
     .chat-toggle {
       position: fixed;
       bottom: 20px;
@@ -65,6 +65,7 @@
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     }
+
     .chat-box {
       position: fixed;
       bottom: 80px;
@@ -77,6 +78,7 @@
       flex-direction: column;
       box-shadow: 0 4px 20px rgba(0,0,0,0.7);
     }
+
     .chat-header {
       background: #4ade80;
       color: #111;
@@ -84,16 +86,19 @@
       text-align: center;
       font-weight: bold;
     }
+
     .chat-messages {
       flex: 1;
       padding: 10px;
       max-height: 250px;
       overflow-y: auto;
     }
+
     .chat-input {
       border-top: 1px solid #444;
       display: flex;
     }
+
     .chat-input textarea {
       flex: 1;
       padding: 10px;
@@ -103,6 +108,7 @@
       color: #fff;
       font-size: 14px;
     }
+
     .chat-input button {
       background: #4ade80;
       color: #111;
@@ -110,23 +116,27 @@
       padding: 10px 15px;
       cursor: pointer;
     }
+
     .chat-message {
       display: flex;
       align-items: flex-start;
       margin-bottom: 10px;
     }
+
     .chat-message img {
       width: 32px;
       height: 32px;
       border-radius: 50%;
       margin-right: 8px;
     }
+
     .chat-message-content {
       background: #333;
       padding: 6px 10px;
       border-radius: 8px;
       max-width: 200px;
     }
+
     .modal {
       position: fixed;
       top: 0; left: 0;
@@ -137,6 +147,7 @@
       justify-content: center;
       z-index: 999;
     }
+
     .modal-content {
       background: #222;
       padding: 20px;
@@ -144,11 +155,13 @@
       text-align: center;
       color: #fff;
     }
+
     .modal-content input[type="text"], .modal-content input[type="file"] {
       margin: 10px 0;
       padding: 8px;
       width: 100%;
     }
+
     .modal-content button {
       background: #4ade80;
       color: #111;
@@ -158,108 +171,15 @@
       margin-top: 10px;
     }
   </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBB4wMJLh2b6eLjCxvL1i3ipeO0ZWdF1VE",
-      authDomain: "radioweb-c857b.firebaseapp.com",
-      projectId: "radioweb-c857b",
-      storageBucket: "radioweb-c857b.appspot.com",
-      messagingSenderId: "139041838201",
-      appId: "1:139041838201:web:a3c8a8dd616f68508a70a8"
-    };
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    let userNickname = "";
-    let userAvatar = "";
-
-    window.toggleChat = function () {
-      if (!userNickname) {
-        document.getElementById("userModal").style.display = "flex";
-      } else {
-        const chatBox = document.getElementById("chatBox");
-        chatBox.style.display = chatBox.style.display === "flex" ? "none" : "flex";
-      }
-    };
-
-    window.saveUserInfo = function () {
-      const name = document.getElementById("nickname").value.trim();
-      const fileInput = document.getElementById("avatarFile");
-      if (name === "") {
-        alert("Por favor, digite um nome.");
-        return;
-      }
-      userNickname = name;
-      const file = fileInput.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          userAvatar = e.target.result;
-          finishLogin();
-        };
-        reader.readAsDataURL(file);
-      } else {
-        userAvatar = "";
-        finishLogin();
-      }
-    };
-
-    function finishLogin() {
-      document.getElementById("userModal").style.display = "none";
-      document.getElementById("chatBox").style.display = "flex";
-    }
-
-    function addMessageToChat(data) {
-      const chatMessages = document.getElementById("chatMessages");
-      const msg = data.val();
-      const div = document.createElement("div");
-      div.className = "chat-message";
-
-      const img = document.createElement("img");
-      img.src = msg.avatar || 'https://via.placeholder.com/32?text=👤';
-      div.appendChild(img);
-
-      const content = document.createElement("div");
-      content.className = "chat-message-content";
-      content.innerHTML = `<strong>${msg.nickname}</strong><br>${msg.message}`;
-      div.appendChild(content);
-
-      chatMessages.appendChild(div);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    const messagesRef = ref(db, "messages");
-    onChildAdded(messagesRef, addMessageToChat);
-
-    window.sendMessage = function () {
-      const chatInput = document.querySelector("#chatInput textarea");
-      const message = chatInput.value.trim();
-      if (message === "") return;
-      push(messagesRef, {
-        nickname: userNickname,
-        avatar: userAvatar,
-        message: message
-      });
-      chatInput.value = "";
-    };
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const chatInput = document.querySelector("#chatInput textarea");
-      chatInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-    });
-  </script>
 </head>
 <body>
   <header>📻 LUSITÂNIA II web rádio</header>
+
   <main>
     <div class="radio-player">
       <h2>Ouça Nossa Rádio Ao Vivo</h2>
@@ -273,26 +193,129 @@
       </div>
     </div>
   </main>
-  <footer>&copy; 2025 LUSITÂNIA II web rádio - Todos os direitos reservados</footer>
+
+  <footer>
+    &copy; 2025 LUSITÂNIA II web rádio - Todos os direitos reservados
+  </footer>
 
   <button class="chat-toggle" onclick="toggleChat()">💬</button>
 
   <div class="chat-box" id="chatBox">
-    <div class="chat-header">Chat da Rádio</div>
+    <div class="chat-header">Chat dos Ouvintes</div>
     <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input" id="chatInput">
-      <textarea placeholder="Digite sua mensagem..."></textarea>
-      <button onclick="sendMessage()">Enviar</button>
+    <div class="chat-input">
+      <textarea id="chatInput" rows="2" placeholder="Digite sua mensagem..."></textarea>
+      <button onclick="sendMessage()">➤</button>
     </div>
   </div>
 
   <div class="modal" id="userModal">
     <div class="modal-content">
-      <h3>Digite seu nome e envie um avatar</h3>
-      <input type="text" id="nickname" placeholder="Seu nome">
-      <input type="file" id="avatarFile" accept="image/*">
-      <button onclick="saveUserInfo()">Entrar no Chat</button>
+      <h3>Bem-vindo ao chat!</h3>
+      <input type="text" id="nickname" placeholder="Digite seu nome..." />
+      <label>Escolha sua foto de perfil:</label>
+      <input type="file" id="avatarFile" accept="image/*" />
+      <button onclick="saveUserInfo()">Entrar no chat</button>
     </div>
   </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBB4wMJLh2b6eLjCxvL1i3ipeO0ZWdF1VE",
+      authDomain: "radioweb-c857b.firebaseapp.com",
+      projectId: "radioweb-c857b",
+      storageBucket: "radioweb-c857b.appspot.com",
+      messagingSenderId: "139041838201",
+      appId: "1:139041838201:web:a3c8a8dd616f68508a70a8"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const radio = document.getElementById('radio');
+    const volumeControl = document.getElementById('volume');
+    const chatBox = document.getElementById('chatBox');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+
+    let userNickname = localStorage.getItem('nickname') || '';
+    let userAvatar = localStorage.getItem('avatar') || '';
+
+    volumeControl.addEventListener('input', () => radio.volume = volumeControl.value);
+
+    function toggleChat() {
+      if (!userNickname) {
+        document.getElementById('userModal').style.display = 'flex';
+      } else {
+        chatBox.style.display = chatBox.style.display === 'flex' ? 'none' : 'flex';
+      }
+    }
+
+    function saveUserInfo() {
+      const name = document.getElementById('nickname').value.trim();
+      const fileInput = document.getElementById('avatarFile');
+      if (!name) return alert('Digite um nome.');
+      userNickname = name;
+      localStorage.setItem('nickname', userNickname);
+
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          userAvatar = e.target.result;
+          localStorage.setItem('avatar', userAvatar);
+          finishLogin();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        userAvatar = '';
+        localStorage.setItem('avatar', '');
+        finishLogin();
+      }
+    }
+
+    function finishLogin() {
+      document.getElementById('userModal').style.display = 'none';
+      chatBox.style.display = 'flex';
+    }
+
+    function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+      const msgObj = {
+        nickname: userNickname,
+        avatar: userAvatar,
+        text: message,
+        timestamp: Date.now()
+      };
+      db.ref('chat').push(msgObj);
+      chatInput.value = '';
+    }
+
+    chatInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    db.ref('chat').limitToLast(50).on('child_added', function (snapshot) {
+      const data = snapshot.val();
+      const div = document.createElement('div');
+      div.classList.add('chat-message');
+
+      const img = document.createElement('img');
+      img.src = data.avatar || 'https://via.placeholder.com/32?text=👤';
+      div.appendChild(img);
+
+      const content = document.createElement('div');
+      content.classList.add('chat-message-content');
+      content.innerHTML = `<strong>${data.nickname}</strong><br>${data.text}`;
+      div.appendChild(content);
+
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+  </script>
 </body>
 </html>
